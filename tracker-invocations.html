@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Mes Invocations du Jour</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#0d1117;--surface:#161b22;--border:#c9a96e30;
+      --gold:#c9a96e;--gold-light:#e0bf84;--text:#e8e0d5;
+      --muted:#7a7570;--green:#4caf7d;--checked-bg:#c9a96e14;
+    }
+    body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:50px;}
+    header{width:100%;background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;position:sticky;top:0;z-index:10;}
+    header h1{font-size:0.95rem;letter-spacing:0.16em;color:var(--gold);text-transform:uppercase;}
+    #date-display{font-size:0.72rem;color:var(--muted);letter-spacing:0.08em;}
+    #progress-wrap{width:100%;max-width:420px;padding:16px 20px 0;display:flex;flex-direction:column;gap:6px;}
+    #progress-row{display:flex;justify-content:space-between;align-items:baseline;}
+    #progress-label{font-size:0.75rem;color:var(--muted);}
+    #progress-count{font-size:1.5rem;color:var(--gold);font-weight:bold;}
+    #progress-total{font-size:0.75rem;color:var(--muted);}
+    #progress-bar-bg{width:100%;height:6px;background:var(--surface);border-radius:99px;overflow:hidden;border:1px solid var(--border);}
+    #progress-bar-fg{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:99px;transition:width 0.4s ease;}
+    #bilan-msg{font-size:0.78rem;color:var(--green);text-align:center;margin-top:4px;min-height:18px;}
+    #tabs{width:100%;max-width:420px;display:flex;margin:14px 20px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+    .tab{flex:1;padding:9px 0;text-align:center;background:transparent;border:none;color:var(--muted);font-family:'Georgia',serif;font-size:0.78rem;letter-spacing:0.07em;cursor:pointer;transition:background 0.2s,color 0.2s;}
+    .tab.active{background:var(--gold);color:#0d1117;font-weight:bold;}
+    main{width:100%;max-width:420px;padding:0 16px;}
+    .view{display:none;padding-top:14px;}
+    .view.active{display:block;}
+    .cat-label{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);padding:14px 2px 6px;}
+    .inv-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;transition:border-color 0.2s,background 0.2s;overflow:hidden;touch-action:pan-y;}
+    .inv-row.done{background:var(--checked-bg);border-color:var(--gold)66;}
+    .inv-row.dragging{opacity:0.4;border:2px dashed var(--gold);}
+    .inv-row.drag-over{border:2px solid var(--gold);transform:scale(1.01);}
+    .inv-row-main{display:flex;align-items:center;}
+    .drag-handle{width:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.1rem;padding:14px 6px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
+    .drag-handle:active{cursor:grabbing;color:var(--gold);}
+    .check-btn{width:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;font-size:1.3rem;padding:14px 6px;-webkit-tap-highlight-color:transparent;transition:transform 0.1s;}
+    .check-btn:active{transform:scale(0.85);}
+    .inv-text-wrap{flex:1;padding:12px 4px 12px 0;}
+    .inv-title{font-size:0.88rem;color:var(--text);line-height:1.45;}
+    .inv-row.done .inv-title{color:var(--muted);text-decoration:line-through;}
+    .inv-cat-tag{font-size:0.62rem;color:var(--muted);letter-spacing:0.06em;margin-top:3px;}
+    .inv-actions{display:flex;flex-shrink:0;}
+    .inv-edit,.inv-del{background:none;border:none;font-size:1rem;padding:14px 8px;cursor:pointer;transition:color 0.2s;}
+    .inv-edit{color:var(--muted);}.inv-edit:hover{color:var(--gold);}
+    .inv-del{color:var(--border);}.inv-del:hover{color:#e05555;}
+    .edit-zone{display:none;padding:0 12px 12px 12px;border-top:1px solid var(--border);}
+    .edit-zone.open{display:block;}
+    .edit-zone textarea{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--gold)66;border-radius:8px;color:var(--text);font-family:'Georgia',serif;font-size:0.85rem;resize:vertical;min-height:56px;outline:none;margin-top:10px;}
+    .edit-zone select{width:100%;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Georgia',serif;font-size:0.82rem;outline:none;margin-top:7px;}
+    .edit-btns{display:flex;gap:8px;margin-top:8px;}
+    .btn-ok{flex:1;padding:8px;background:var(--gold);color:#0d1117;border:none;border-radius:7px;font-family:'Georgia',serif;font-size:0.82rem;font-weight:bold;cursor:pointer;}
+    .btn-nope{padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-family:'Georgia',serif;font-size:0.82rem;cursor:pointer;}
+    #add-zone{background:var(--surface);border:1px dashed var(--gold)66;border-radius:14px;padding:16px;margin-top:10px;}
+    #add-zone h3{font-size:0.8rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;}
+    .field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+    .field label{font-size:0.7rem;color:var(--muted);letter-spacing:0.06em;}
+    .field input,.field select,.field textarea{padding:9px 11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Georgia',serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;width:100%;}
+    .field textarea{resize:vertical;min-height:64px;}
+    .field input:focus,.field textarea:focus{border-color:var(--gold);}
+    #btn-add-inv{width:100%;padding:11px;background:var(--gold);color:#0d1117;border:none;border-radius:9px;font-family:'Georgia',serif;font-size:0.9rem;font-weight:bold;cursor:pointer;}
+    #bilan-view{padding-top:14px;}
+    #bilan-header{text-align:center;padding:20px 10px;}
+    #bilan-circle{width:120px;height:120px;border-radius:50%;border:4px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 14px;}
+    #bilan-pct{font-size:2rem;color:var(--gold);font-weight:bold;}
+    #bilan-sub{font-size:0.7rem;color:var(--muted);}
+    #bilan-phrase{font-size:0.88rem;color:var(--text);line-height:1.6;max-width:300px;margin:0 auto 20px;}
+    .bilan-section{margin-bottom:16px;}
+    .bilan-section h4{font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+    .bilan-item{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-radius:9px;margin-bottom:6px;font-size:0.82rem;}
+    .bilan-item.ok{background:#4caf7d18;color:var(--text);}
+    .bilan-item.miss{background:#e0555518;color:var(--muted);}
+    .bilan-icon{font-size:1rem;flex-shrink:0;margin-top:2px;}
+    #reset-day-btn{width:100%;margin-top:10px;padding:12px;background:transparent;border:1px solid var(--border);border-radius:9px;color:var(--muted);font-family:'Georgia',serif;font-size:0.82rem;cursor:pointer;}
+    #empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:0.85rem;line-height:1.7;}
+    #drag-hint{font-size:0.68rem;color:var(--muted);text-align:center;padding:4px 0 0;letter-spacing:0.05em;}
+  </style>
+</head>
+<body>
+<header>
+  <h1>☽ Invocations du Jour</h1>
+  <div id="date-display"></div>
+</header>
+<div id="progress-wrap">
+  <div id="progress-row">
+    <span id="progress-label">Récitées aujourd'hui</span>
+    <span><span id="progress-count">0</span> <span id="progress-total">/ 0</span></span>
+  </div>
+  <div id="progress-bar-bg"><div id="progress-bar-fg"></div></div>
+  <div id="bilan-msg"></div>
+</div>
+<div id="tabs">
+  <button class="tab active" data-tab="list-view">📋 Ma liste</button>
+  <button class="tab" data-tab="add-view">✏️ Ajouter</button>
+  <button class="tab" data-tab="bilan-view">🌙 Bilan</button>
+</div>
+<main>
+  <div class="view active" id="list-view">
+    <div id="drag-hint"></div>
+    <div id="inv-list"></div>
+  </div>
+  <div class="view" id="add-view">
+    <div id="add-zone">
+      <h3>Nouvelle invocation</h3>
+      <div class="field">
+        <label>Texte de l'invocation</label>
+        <textarea id="f-text" placeholder="Ex : Invocation en entrant à la mosquée…"></textarea>
+      </div>
+      <div class="field">
+        <label>Catégorie</label>
+        <select id="f-cat">
+          <option>Mosquée</option><option>Adhkars du Matin</option><option>Adhkars du Soir</option>
+          <option>Après la prière</option><option>Au réveil & coucher</option>
+          <option>Repas & boisson</option><option>Entrée & sortie</option>
+          <option>Protection & Refuge</option><option>Voyages & déplacements</option>
+          <option>Famille & quotidien</option><option>Autre</option>
+        </select>
+      </div>
+      <button id="btn-add-inv">+ Ajouter à ma liste</button>
+    </div>
+  </div>
+  <div class="view" id="bilan-view">
+    <div id="bilan-header">
+      <div id="bilan-circle">
+        <span id="bilan-pct">0%</span>
+        <span id="bilan-sub">du jour</span>
+      </div>
+      <div id="bilan-phrase"></div>
+    </div>
+    <div class="bilan-section">
+      <h4>✅ Récitées</h4><div id="bilan-done-list"></div>
+    </div>
+    <div class="bilan-section">
+      <h4>⏳ Non récitées</h4><div id="bilan-miss-list"></div>
+    </div>
+    <button id="reset-day-btn">🔄 Remettre à zéro (nouveau jour)</button>
+  </div>
+</main>
+
+<script>
+const CATS=['Mosquée','Adhkars du Matin','Adhkars du Soir','Après la prière','Au réveil & coucher','Repas & boisson','Entrée & sortie','Protection & Refuge','Voyages & déplacements','Famille & quotidien','Autre'];
+
+const DEFAULTS = [
+  // MOSQUÉE (7)
+  {id:1, text:"Invocation à dire en sortant de la maison 🏠 - Au Nom d'Allâh. Je place ma confiance en Allâh en dehors duquel il n'y a ni force, ni puissance.", cat:"Mosquée"},
+  {id:2, text:"Invocation à dire en rentrant chez soi 🏠 - C'est au Nom d'Allâh que nous entrons, et au Nom d'Allah que nous sortons et c'est en notre Seigneur que nous plaçons notre confiance.", cat:"Mosquée"},
+  {id:3, text:"Invocation à dire pendant et après l'Adhan - 1️⃣ Répéter ce que le muezzin dit.", cat:"Mosquée"},
+  {id:4, text:"Invocation à dire pendant et après l'Adhan - 2️⃣ Et moi j'atteste qu'il n'y a de divinité en dehors d'Allâh, Seul et sans associé, et que Muhammad est Son Serviteur et Messager.", cat:"Mosquée"},
+  {id:5, text:"Invocation à dire pendant et après l'Adhan - 3️⃣ J'accepte Allâh pour Seigneur, Muhammad pour Prophète et l'Islam pour religion.", cat:"Mosquée"},
+  {id:6, text:"Invocation à dire pendant et après l'Adhan - 4️⃣ Ô Seigneur de ce parfait appel et de la prière présente, octroie à Muhammad le haut rang et le mérite, et ressuscite-le à la noble place que Tu lui as promise. [Car, certes, Tu ne manques jamais à Ta promesse].", cat:"Mosquée"},
+  {id:7, text:"Invocation à dire pendant et après l'Adhan - 5️⃣ Implorer Allâh pour soi-même.", cat:"Mosquée"},
+  // ADHKARS DU MATIN (17)
+  {id:8, text:"🟩 Ayatoul-Kursiyy : Allâh ! Point de divinité à part Lui, le Vivant [qui ne meurt jamais], Celui qui subsiste par Lui-même [et par qui tout subsiste]. Ni somnolence ni sommeil ne le saisissent. À Lui (appartient tout) ce qui est dans les cieux et sur la terre. Qui peut intercéder auprès de Lui si ce n'est avec Sa permission. Il connaît leur passé et leur futur. Et, de Sa Science ils ne cernent que ce qu'Il veut. Son «Kursiyy» déborde les cieux et la terre dont la garde ne Lui coûte aucune peine. Et, Il est le Très Haut le Très Grand.", cat:"Adhkars du Matin"},
+  {id:9, text:"🟩 Les 3 dernières sourates du Coran (3 fois chacune) :|AL-IKHLÂS : Dis : Il est Allah, Unique. Allah, le Seul à être imploré pour ce que nous désirons. Il n'a jamais engendré et n'a pas été engendré non plus. Et nul n'est égal à Lui.|AL-FALAQ : Dis : Je cherche protection auprès du Seigneur de l'aube naissante, contre le mal des êtres qu'il a créés, contre le mal de l'obscurité quand elle s'approfondit, contre le mal de celles qui soufflent sur les nœuds, et contre le mal de l'envieux quand il envie.|AN-NÂS : Dis : Je cherche protection auprès du Seigneur des hommes, le Souverain des hommes, Dieu des hommes, contre le mal du tentateur furtif, qui souffle le mal dans les poitrines des hommes, parmi les djinns ou les êtres humains.", cat:"Adhkars du Matin", sourates:true},
+  {id:12, text:"🟩 Ô Allâh, Tu es mon Seigneur, point de divinité sinon Toi, Tu m'as créé et je suis Ton adorateur. Je me soumets à l'engagement que j'ai pris envers Toi et à Ta promesse dans la mesure de mes capacités. Je me réfugie auprès de Toi contre le mal que j'ai commis. Je reconnais le bienfait dont Tu m'as comblé et je reconnais mon péché. Pardonne-moi donc car Il n'est personne qui pardonne les péchés en dehors de Toi.", cat:"Adhkars du Matin"},
+  {id:13, text:"🟩 Ô le Vivant {qui ne meurt jamais}, Ô Celui qui subsiste par lui-même {et par qui tout subsiste} je cherche secours auprès de ta miséricorde. Ne m'abandonne pas à mon sort ne serait-ce le temps d'un clin d'œil et arrange toutes mes affaires.", cat:"Adhkars du Matin"},
+  {id:14, text:"🟩 Mon Dieu ! Préserve la santé de mon corps. Mon Dieu ! Préserve la santé de mon ouïe. Mon Dieu ! Préserve la santé de ma vue. Il n'y a de Dieu que Toi. Je cherche protection auprès de Toi contre la mécréance, la pauvreté et je me mets sous Ta protection contre les tourments de la tombe il n'y a de Dieu que Toi.", cat:"Adhkars du Matin"},
+  {id:15, text:"🟩 Le jour se lève sur nous et la Royauté appartient à Allâh. La louange appartient à Allâh. Nulle divinité en dehors d'Allâh, Seul et sans associé. À Lui appartiennent la Royauté et la Louange, et Il est Omnipotent. Seigneur je T'implore de m'accorder le bien présent en ce jour et le bien venant après. Et je me réfugie auprès de Toi contre le mal présent en ce jour et contre le mal venant après. Seigneur ! Je me réfugie auprès de Toi contre la paresse et le mauvais vieillissement. Seigneur ! Préserve-moi de tout châtiment en Enfer et de tout supplice dans la tombe !", cat:"Adhkars du Matin"},
+  {id:16, text:"🟩 Ô Mon Dieu, c'est par Ta grâce que nous avons vu se lever ce matin et c'est par Ta grâce que nous sommes arrivés au soir. C'est par toi que nous vivons et mourons et c'est auprès de Toi que nous serons rassemblés.", cat:"Adhkars du Matin"},
+  {id:17, text:"🟩 📿 Subhâna-l-lâhi — Gloire à Allah (100 fois)", cat:"Adhkars du Matin"},
+  {id:18, text:"🟩 📿 Subhâna-l-lâhi wa bi hamdihi — Gloire et louange à Allah (100 fois)", cat:"Adhkars du Matin"},
+  {id:19, text:"🟩 📿 Lâ ilâha illa-l-lâhu wahdahu lâ charîka lahu, lahu-l-mulku, wa lahu-l-hamdu, wa huwa alâ kulli shay'in qadîr — Nul dieu qu'Allah seul, sans associé (100 fois + 10 fois)", cat:"Adhkars du Matin"},
+  {id:20, text:"🟩 Ô Allâh, je Te demande le pardon et la protection dans cette vie et dans l'au-delà. Ô Allâh je Te demande le pardon et la protection dans ma religion, ma vie, ma famille et mes biens. Ô Allâh, couvre mes défauts et rassure quant à mes peurs. Ô Allâh, Préserve moi devant moi et derrière, à ma droite, à ma gauche et au-dessus de moi, et je me réfugie auprès de Ta majesté contre une mort qui surgirait d'en dessous de moi.", cat:"Adhkars du Matin"},
+  {id:21, text:"🟩 Ô Allâh, Connaisseur de l'inconnu et du visible, Créateur des cieux et de la terre, Seigneur de toute chose et Possesseur; j'atteste qu'il n'y a pas de divinité en dehors de Toi. Je me réfugie auprès de Toi contre le mal de mon âme, et contre le mal du diable et de son incitation, et contre tout méfait que je pourrais perpétrer envers moi-même ou envers un autre musulman.", cat:"Adhkars du Matin"},
+  {id:22, text:"🟩 Au Nom d'Allâh dont la mention empêche toute chose de nuire, tant sur la terre que dans le ciel et Il est l'Audient, l'Omniscient [3 fois]", cat:"Adhkars du Matin"},
+  {id:23, text:"🟩 Gloire, pureté et louange à Allâh d'un nombre de fois égal à celui de Ses créatures suffisant pour le satisfaire, égal au poids de Son trône et au volume de l'encre de Ses Paroles [3 fois]", cat:"Adhkars du Matin"},
+  {id:24, text:"🟩 Je reconnais Allâh pour Seigneur, l'Islâm pour religion et Muhammad pour Prophète [3 fois]", cat:"Adhkars du Matin"},
+  {id:25, text:"🟩 Ô Allâh, je Te demande une science utile, une subsistance saine et une œuvre agréée.", cat:"Adhkars du Matin"},
+  {id:26, text:"🟩 Le jour se lève sur nous et la Royauté est à Allâh, Seigneur des mondes. Ô Allâh, je Te demande de m'accorder le bien de ce jour : conquête, victoire, lumière, bénédiction et guidée. Et je me réfugie auprès de toi contre le mal qu'il contient et contre le mal venant après.", cat:"Adhkars du Matin"},
+  // ADHKARS DU SOIR (14)
+  {id:27, text:"🟩 Ayatoul-Kursiyy (soir) : Allâh ! Point de divinité à part Lui, le Vivant [qui ne meurt jamais], Celui qui subsiste par Lui-même [et par qui tout subsiste]. Ni somnolence ni sommeil ne le saisissent. À Lui (appartient tout) ce qui est dans les cieux et sur la terre. Qui peut intercéder auprès de Lui si ce n'est avec Sa permission. Il connaît leur passé et leur futur. Et, de Sa Science ils ne cernent que ce qu'Il veut. Son «Kursiyy» déborde les cieux et la terre dont la garde ne Lui coûte aucune peine. Et, Il est le Très Haut le Très Grand.", cat:"Adhkars du Soir"},
+  {id:28, text:"🟩 Les 3 dernières sourates du Coran (3 fois chacune) :|AL-IKHLÂS : Dis : Il est Allah, Unique. Allah, le Seul à être imploré pour ce que nous désirons. Il n'a jamais engendré et n'a pas été engendré non plus. Et nul n'est égal à Lui.|AL-FALAQ : Dis : Je cherche protection auprès du Seigneur de l'aube naissante, contre le mal des êtres qu'il a créés, contre le mal de l'obscurité quand elle s'approfondit, contre le mal de celles qui soufflent sur les nœuds, et contre le mal de l'envieux quand il envie.|AN-NÂS : Dis : Je cherche protection auprès du Seigneur des hommes, le Souverain des hommes, Dieu des hommes, contre le mal du tentateur furtif, qui souffle le mal dans les poitrines des hommes, parmi les djinns ou les êtres humains.", cat:"Adhkars du Soir", sourates:true},
+  {id:31, text:"🟩 Ô Allâh, Tu es mon Seigneur, point de divinité sinon Toi, Tu m'as créé et je suis Ton adorateur. Je me soumets à l'engagement que j'ai pris envers Toi et à Ta promesse dans la mesure de mes capacités. Je me réfugie auprès de Toi contre le mal que j'ai commis. Je reconnais le bienfait dont Tu m'as comblé et je reconnais mon péché. Pardonne-moi donc car Il n'est personne qui pardonne les péchés en dehors de Toi.", cat:"Adhkars du Soir"},
+  {id:32, text:"🟩 Ô le Vivant {qui ne meurt jamais}, Ô Celui qui subsiste par lui-même {et par qui tout subsiste} je cherche secours auprès de ta miséricorde. Ne m'abandonne pas à mon sort ne serait-ce le temps d'un clin d'œil et arrange toutes mes affaires.", cat:"Adhkars du Soir"},
+  {id:33, text:"🟩 Mon Dieu ! Préserve la santé de mon corps. Mon Dieu ! Préserve la santé de mon ouïe. Mon Dieu ! Préserve la santé de ma vue. Il n'y a de Dieu que Toi. Je cherche protection auprès de Toi contre la mécréance, la pauvreté et je me mets sous Ta protection contre les tourments de la tombe il n'y a de Dieu que Toi.", cat:"Adhkars du Soir"},
+  {id:34, text:"🟩 La nuit tombe sur nous et la Royauté appartient à Allâh. La louange appartient à Allâh. Nulle divinité en dehors d'Allâh, Seul et sans associé. À Lui appartiennent la Royauté et la Louange, et Il est Omnipotent. Seigneur je T'implore de m'accorder le bien présent en cette nuit et le bien venant après. Et je me réfugie auprès de Toi contre le mal présent en cette nuit et contre le mal venant après. Seigneur ! Je me réfugie auprès de Toi contre la paresse et le mauvais vieillissement. Seigneur ! Préserve-moi de tout châtiment en Enfer et de tout supplice dans la tombe !", cat:"Adhkars du Soir"},
+  {id:35, text:"🟩 Ô Mon Dieu, c'est par Ta grâce que nous sommes arrivés au soir et c'est par Ta grâce que nous avons vu se lever ce matin. C'est par Toi que nous vivons et mourons et c'est auprès de Toi que nous serons rassemblés.", cat:"Adhkars du Soir"},
+  {id:36, text:"🟩 📿 Subhâna-l-lâhi — Gloire à Allah (100 fois)", cat:"Adhkars du Soir"},
+  {id:37, text:"🟩 📿 Subhâna-l-lâhi wa bi hamdihi — Gloire et louange à Allah (100 fois)", cat:"Adhkars du Soir"},
+  {id:38, text:"🟩 Ô Allâh, je Te demande le pardon et la protection dans cette vie et dans l'au-delà. Ô Allâh je Te demande le pardon et la protection dans ma religion, ma vie, ma famille et mes biens. Ô Allâh, couvre mes défauts et rassure quant à mes peurs. Ô Allâh, Préserve moi devant moi et derrière, à ma droite, à ma gauche et au-dessus de moi, et je me réfugie auprès de Ta majesté contre une mort qui surgirait d'en dessous de moi.", cat:"Adhkars du Soir"},
+  {id:39, text:"🟩 Ô Allâh, Connaisseur de l'inconnu et du visible, Créateur des cieux et de la terre, Seigneur de toute chose et Possesseur; j'atteste qu'il n'y a pas de divinité en dehors de Toi. Je me réfugie auprès de Toi contre le mal de mon âme, et contre le mal du diable et de son incitation, et contre tout méfait que je pourrais perpétrer envers moi-même ou envers un autre musulman.", cat:"Adhkars du Soir"},
+  {id:40, text:"🟩 Au Nom d'Allâh dont la mention empêche toute chose de nuire, tant sur la terre que dans le ciel et Il est l'Audient, l'Omniscient [3 fois]", cat:"Adhkars du Soir"},
+  {id:41, text:"🟩 Je cherche refuge auprès des paroles parfaites d'Allâh contre le mal de ce qu'Il a créé [3 fois].", cat:"Adhkars du Soir"},
+  {id:42, text:"🟩 La nuit tombe sur nous et la Royauté est toujours à Allâh, Seigneur des mondes. Ô Allâh, je Te demande de m'accorder le bien de cette nuit : conquête, victoire, lumière, bénédiction et guidée. Et je me réfugie auprès de toi contre le mal qu'il contient et contre le mal venant après.", cat:"Adhkars du Soir"},
+];
+
+let invocations = JSON.parse(localStorage.getItem('citadelle_inv')||'null');
+if(!invocations){ invocations = DEFAULTS; localStorage.setItem('citadelle_inv', JSON.stringify(invocations)); }
+
+let state = JSON.parse(localStorage.getItem('citadelle_state')||'{"date":null,"checked":{}}');
+const todayKey = new Date().toISOString().slice(0,10);
+const todayStr = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('date-display').textContent = todayStr.charAt(0).toUpperCase()+todayStr.slice(1);
+if(state.date!==todayKey){state={date:todayKey,checked:{}};saveState();}
+
+function saveInv(){localStorage.setItem('citadelle_inv',JSON.stringify(invocations));}
+function saveState(){localStorage.setItem('citadelle_state',JSON.stringify(state));}
+function nextId(){return invocations.length?Math.max(...invocations.map(i=>i.id))+1:1;}
+function getDone(){return invocations.filter(i=>state.checked[i.id]);}
+function getMiss(){return invocations.filter(i=>!state.checked[i.id]);}
+
+function bilanPhrase(pct){
+  if(pct===100)return"مَا شَاءَ اللَّهُ — Toutes vos invocations ont été récitées. Qu'Allah accepte. 🌿";
+  if(pct>=75)return"Très bien ! Vous avez récité la grande majorité de vos invocations.";
+  if(pct>=50)return"Bien ! Plus de la moitié récitée. Il reste encore du chemin pour ce soir.";
+  if(pct>=25)return"Un bon début. Prenez quelques minutes ce soir pour les invocations restantes.";
+  if(pct>0)return"Vous avez commencé. Pensez à réciter les invocations restantes. 🌙";
+  return"Aucune invocation récitée pour l'instant. La journée n'est pas encore terminée. 🌙";
+}
+
+function renderAll(){renderProgress();renderList();}
+
+function renderProgress(){
+  const done=getDone().length,total=invocations.length;
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('progress-count').textContent=done;
+  document.getElementById('progress-total').textContent='/ '+total;
+  document.getElementById('progress-bar-fg').style.width=pct+'%';
+  const msg=document.getElementById('bilan-msg');
+  if(!total){msg.textContent='';return;}
+  if(pct===100)msg.textContent='🌿 Toutes les invocations du jour récitées !';
+  else if(done>0)msg.textContent=`${done} sur ${total} récitées — ${pct}%`;
+  else msg.textContent='';
+}
+
+function renderList(){
+  const container=document.getElementById('inv-list');
+  container.innerHTML='';
+  const hint=document.getElementById('drag-hint');
+  if(!invocations.length){
+    hint.textContent='';
+    container.innerHTML=`<div id="empty-state"><span>🕌</span>Votre liste est vide.</div>`;
+    return;
+  }
+  hint.textContent='Maintenez ☰ pour réordonner';
+  const cats=[...new Set(invocations.map(i=>i.cat))];
+  cats.forEach(cat=>{
+    const lbl=document.createElement('div');
+    lbl.className='cat-label';lbl.textContent=cat;
+    container.appendChild(lbl);
+    invocations.filter(i=>i.cat===cat).forEach(inv=>{
+      const isDone=!!state.checked[inv.id];
+      const wrap=document.createElement('div');
+      wrap.className='inv-row'+(isDone?' done':'');
+      wrap.dataset.id=inv.id;
+      wrap.draggable=true;
+      const catOpts=CATS.map(c=>`<option${c===inv.cat?' selected':''}>${c}</option>`).join('');
+
+      // Format text: if sourates:true, split by | and color names red
+      let displayText = inv.text;
+      if(inv.sourates){
+        const parts = inv.text.split('|');
+        const header = parts[0];
+        const sourates = parts.slice(1).map(s => {
+          const colonIdx = s.indexOf(':');
+          if(colonIdx > -1){
+            const name = s.substring(0, colonIdx);
+            const rest = s.substring(colonIdx);
+            return `<div style="margin-top:6px;"><span style="color:#e05555;font-weight:bold;">🔲 ${name}</span><span>${rest}</span></div>`;
+          }
+          return `<div style="margin-top:6px;">🔲 ${s}</div>`;
+        }).join('');
+        displayText = `<div>${header}</div>${sourates}`;
+      }
+      wrap.innerHTML=`
+        <div class="inv-row-main">
+          <div class="drag-handle">☰</div>
+          <button class="check-btn">${isDone?'✅':'⬜'}</button>
+          <div class="inv-text-wrap">
+            <div class="inv-title inv-title-${inv.id}">${displayText}</div>
+            <div class="inv-cat-tag">${inv.cat}</div>
+          </div>
+          <div class="inv-actions">
+            <button class="inv-edit">✏️</button>
+            <button class="inv-del">🗑</button>
+          </div>
+        </div>
+        <div class="edit-zone">
+          <textarea class="edit-text">${inv.text}</textarea>
+          <select class="edit-cat">${catOpts}</select>
+          <div class="edit-btns">
+            <button class="btn-nope">Annuler</button>
+            <button class="btn-ok">Enregistrer</button>
+          </div>
+        </div>`;
+      container.appendChild(wrap);
+
+      // Fix innerHTML for sourates
+      if(inv.sourates){
+        const titleEl = wrap.querySelector(`.inv-title-${inv.id}`);
+        if(titleEl) titleEl.innerHTML = displayText;
+      }
+
+      wrap.querySelector('.check-btn').addEventListener('click',()=>toggleCheck(inv.id));
+      wrap.querySelector('.inv-del').addEventListener('click',()=>deleteInv(inv.id,wrap));
+      wrap.querySelector('.inv-edit').addEventListener('click',()=>{
+        const ez=wrap.querySelector('.edit-zone');
+        ez.classList.toggle('open');
+        if(ez.classList.contains('open'))ez.querySelector('.edit-text').focus();
+      });
+      wrap.querySelector('.btn-nope').addEventListener('click',()=>wrap.querySelector('.edit-zone').classList.remove('open'));
+      wrap.querySelector('.btn-ok').addEventListener('click',()=>{
+        const t=wrap.querySelector('.edit-text').value.trim();
+        const c=wrap.querySelector('.edit-cat').value;
+        if(!t)return;
+        const idx=invocations.findIndex(i=>i.id===inv.id);
+        if(idx>-1){invocations[idx].text=t;invocations[idx].cat=c;}
+        saveInv();renderAll();
+      });
+
+      wrap.addEventListener('dragstart',e=>{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',inv.id);setTimeout(()=>wrap.classList.add('dragging'),0);});
+      wrap.addEventListener('dragend',()=>wrap.classList.remove('dragging'));
+      wrap.addEventListener('dragover',e=>{e.preventDefault();wrap.classList.add('drag-over');});
+      wrap.addEventListener('dragleave',()=>wrap.classList.remove('drag-over'));
+      wrap.addEventListener('drop',e=>{
+        e.preventDefault();wrap.classList.remove('drag-over');
+        const fromId=parseInt(e.dataTransfer.getData('text/plain'));
+        const toId=inv.id;if(fromId===toId)return;
+        const fi=invocations.findIndex(i=>i.id===fromId);
+        const ti=invocations.findIndex(i=>i.id===toId);
+        const [moved]=invocations.splice(fi,1);invocations.splice(ti,0,moved);
+        saveInv();renderAll();
+      });
+
+      const handle=wrap.querySelector('.drag-handle');
+      let clone=null,startY=0,touchDragEl=null;
+      handle.addEventListener('touchstart',e=>{
+        e.preventDefault();startY=e.touches[0].clientY;
+        wrap.classList.add('dragging');
+        clone=wrap.cloneNode(true);
+        clone.style.cssText=`position:fixed;left:${wrap.getBoundingClientRect().left}px;top:${wrap.getBoundingClientRect().top}px;width:${wrap.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;border:2px solid var(--gold);border-radius:12px;background:#1e2530;`;
+        document.body.appendChild(clone);touchDragEl=wrap;
+      },{passive:false});
+      handle.addEventListener('touchmove',e=>{
+        e.preventDefault();if(!touchDragEl)return;
+        clone.style.transform=`translateY(${e.touches[0].clientY-startY}px)`;
+        const rows=[...document.querySelectorAll('.inv-row')];
+        const ty=e.touches[0].clientY;
+        rows.forEach(r=>r.classList.remove('drag-over'));
+        const target=rows.find(r=>{const rect=r.getBoundingClientRect();return ty>=rect.top&&ty<=rect.bottom&&r!==touchDragEl;});
+        if(target)target.classList.add('drag-over');
+      },{passive:false});
+      handle.addEventListener('touchend',e=>{
+        if(!touchDragEl)return;
+        const rows=[...document.querySelectorAll('.inv-row')];
+        rows.forEach(r=>r.classList.remove('drag-over'));
+        const ty=e.changedTouches[0].clientY;
+        const target=rows.find(r=>{const rect=r.getBoundingClientRect();return ty>=rect.top&&ty<=rect.bottom&&r!==touchDragEl;});
+        if(target){
+          const toId=parseInt(target.dataset.id);
+          const fi=invocations.findIndex(i=>i.id===inv.id);
+          const ti=invocations.findIndex(i=>i.id===toId);
+          const [moved]=invocations.splice(fi,1);invocations.splice(ti,0,moved);
+          saveInv();
+        }
+        wrap.classList.remove('dragging');
+        if(clone){clone.remove();clone=null;}
+        touchDragEl=null;renderAll();
+      });
+    });
+  });
+}
+
+function toggleCheck(id){
+  if(state.checked[id])delete state.checked[id];
+  else state.checked[id]=true;
+  saveState();
+  if(navigator.vibrate)navigator.vibrate(30);
+  renderAll();
+}
+
+function deleteInv(id,row){
+  if(row.dataset.confirming==='1'){
+    invocations=invocations.filter(i=>i.id!==id);
+    delete state.checked[id];
+    saveInv();saveState();renderAll();return;
+  }
+  row.dataset.confirming='1';
+  const delBtn=row.querySelector('.inv-del');
+  delBtn.textContent='✔ Confirmer';delBtn.style.color='#e05555';delBtn.style.fontSize='0.75rem';
+  setTimeout(()=>{
+    if(row.dataset.confirming==='1'){row.dataset.confirming='0';delBtn.textContent='🗑';delBtn.style.color='';delBtn.style.fontSize='';}
+  },3000);
+}
+
+document.getElementById('btn-add-inv').addEventListener('click',()=>{
+  const text=document.getElementById('f-text').value.trim();
+  if(!text){document.getElementById('f-text').focus();return;}
+  invocations.push({id:nextId(),text,cat:document.getElementById('f-cat').value});
+  saveInv();renderAll();
+  document.getElementById('f-text').value='';
+  switchTab('list-view');
+});
+
+document.getElementById('reset-day-btn').addEventListener('click',()=>{
+  const btn=document.getElementById('reset-day-btn');
+  if(btn.dataset.confirming==='1'){
+    state.checked={};saveState();renderAll();
+    btn.dataset.confirming='0';btn.textContent='🔄 Remettre à zéro (nouveau jour)';btn.style.color='';return;
+  }
+  btn.dataset.confirming='1';btn.textContent='✔ Appuyez encore pour confirmer';btn.style.color='#e05555';
+  setTimeout(()=>{btn.dataset.confirming='0';btn.textContent='🔄 Remettre à zéro (nouveau jour)';btn.style.color='';},3000);
+});
+
+function renderBilan(){
+  const done=getDone().length,total=invocations.length;
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('bilan-pct').textContent=pct+'%';
+  document.getElementById('bilan-phrase').textContent=bilanPhrase(pct);
+  document.getElementById('bilan-done-list').innerHTML=getDone().map(i=>`<div class="bilan-item ok"><span class="bilan-icon">✅</span>${i.text}</div>`).join('')||'<div style="color:var(--muted);font-size:0.8rem;padding:6px 0;">Aucune pour l\'instant</div>';
+  document.getElementById('bilan-miss-list').innerHTML=getMiss().map(i=>`<div class="bilan-item miss"><span class="bilan-icon">⏳</span>${i.text}</div>`).join('')||'<div style="color:var(--green);font-size:0.8rem;padding:6px 0;">Toutes récitées ! 🌿</div>';
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  if(id==='bilan-view')renderBilan();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+renderAll();
+</script>
+</body>
+</html>
