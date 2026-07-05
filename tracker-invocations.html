@@ -116,7 +116,8 @@
           <option>Après la prière</option><option>Au réveil & coucher</option>
           <option>Repas & boisson</option><option>Entrée & sortie</option>
           <option>Protection & Refuge</option><option>Voyages & déplacements</option>
-          <option>Famille & quotidien</option><option>Autre</option>
+          <option>Famille & quotidien</option><option>Ablutions</option>
+          <option>Prière</option><option>Autre</option>
         </select>
       </div>
       <button id="btn-add-inv">+ Ajouter à ma liste</button>
@@ -141,7 +142,7 @@
 </main>
 
 <script>
-const CATS=['Mosquée','Adhkars du Matin','Adhkars du Soir','Après la prière','Au réveil & coucher','Repas & boisson','Entrée & sortie','Protection & Refuge','Voyages & déplacements','Famille & quotidien','Autre'];
+const CATS=['Mosquée','Adhkars du Matin','Adhkars du Soir','Après la prière','Au réveil & coucher','Repas & boisson','Entrée & sortie','Protection & Refuge','Voyages & déplacements','Famille & quotidien','Ablutions','Prière','Autre'];
 
 const DEFAULTS = [
   // MOSQUÉE (7)
@@ -227,6 +228,28 @@ const DEFAULTS = [
   {id:75, text:"⬜ Invocation à dire en sortant de la mosquée 🕌 — Au Nom d'Allâh ! Que la Paix et la Bénédiction soient sur le Messager d'Allâh. Ô Allâh ! Je Te demande Ta Grâce. Ô Allâh ! Préserve-moi du diable maudit.", cat:"Mosquée"},
   // VOYAGE & DÉPLACEMENTS (1)
   {id:76, text:"⬜ Invocation en prenant place sur une monture 🚗🚌✈️🏍🚲 — Au Nom d'Allâh. Louange à Allâh. Gloire à Celui Qui a assigné ceci à notre service alors que nous n'étions pas à même de nous en assurer la maîtrise. Et, certes, c'est vers notre Seigneur que se fera notre retour. Louange à Allâh (3 fois). Allâh est le Plus Grand (3 fois). Gloire à Toi, Ô Allâh, et Louange à Toi. J'ai été injuste envers moi-même. Accorde-moi donc Ton pardon car il n'est que Toi qui puisses absoudre les péchés.", cat:"Voyages & déplacements"},
+  // INVOCATIONS DE LA PRIÈRE (21)
+  {id:77, text:"⬜ Invocation d'ouverture de la prière — Ô Allâh ! Éloigne-moi de mes fautes comme Tu as éloigné l'Orient de l'Occident. Ô Allâh ! Purifie-moi de mes fautes comme on purifie le vêtement blanc de ses impuretés. Ô Allâh ! Lave-moi de mes fautes par la neige, l'eau et la grêle.", cat:"Prière"},
+  {id:78, text:"⬜ Invocation d'ouverture de la prière — Gloire à Toi, Ô Allâh et Louange ! Béni soit Ton Nom et exaltée soit Ta Majesté. Et nulle divinité sinon Toi.", cat:"Prière"},
+  {id:79, text:"⬜ Invocation de l'inclinaison (ruku) — Gloire (et Pureté) à mon Seigneur, le Très Grand (3 fois).", cat:"Prière"},
+  {id:80, text:"⬜ Invocation de l'inclinaison (ruku) — Gloire à Toi Ô Allâh notre Seigneur et Louange à Toi. Ô Allâh ! Pardonne-moi.", cat:"Prière"},
+  {id:81, text:"⬜ Invocation de l'inclinaison (ruku) — Toi qui est glorifié, Toi qui est sanctifié, Seigneur des Anges et du Saint Esprit.", cat:"Prière"},
+  {id:82, text:"⬜ Invocation de l'inclinaison (ruku) — Glorifié soit le Détenteur du Pouvoir, de la Souveraineté, de l'Orgueil et de la Majesté.", cat:"Prière"},
+  {id:83, text:"⬜ Invocation de l'inclinaison (ruku) — Ô Allâh ! C'est pour Toi que je m'incline et en Toi que j'ai foi et à Toi que je me soumets. Mon ouïe s'humilie à Toi, ainsi que mon regard, mon cerveau, mes os, mes nerfs et tout ce que mes pieds portent.", cat:"Prière"},
+  {id:84, text:"⬜ Invocation de la prosternation (sujud) — Gloire (et Pureté) à mon Seigneur, le Très Haut (3 fois).", cat:"Prière"},
+  {id:85, text:"⬜ Invocation de la prosternation (sujud) — Gloire à Toi Ô Allâh notre Seigneur et Louange à Toi ! Ô Allâh ! Pardonne-moi.", cat:"Prière"},
+  {id:86, text:"⬜ Invocation de la prosternation (sujud) — Toi qui est glorifié, Toi qui est sanctifié, Seigneur des anges et du Saint Esprit.", cat:"Prière"},
+  {id:87, text:"⬜ Invocation de la prosternation (sujud) — Glorifié soit le détenteur du Pouvoir, de la Souveraineté, de l'Orgueil et de la Majesté.", cat:"Prière"},
+  {id:88, text:"⬜ Invocation de la prosternation (sujud) — Ô Allâh ! Pardonne-moi tous mes péchés, petits et grands, du premier au dernier, commis en public ou en secret.", cat:"Prière"},
+  {id:89, text:"⬜ Invocation de la prosternation (sujud) — Ô Allâh ! C'est pour Toi que je me prosterne, et en Toi que j'ai foi, et à Toi que je me soumets. Ma face se prosterne devant Celui qui l'a créée et façonnée, et lui a assigné son ouïe et sa vue. Béni soit Allâh, le meilleur des créateurs.", cat:"Prière"},
+  {id:90, text:"⬜ Invocation de la prosternation (sujud) — Ô Allâh ! Je me réfugie auprès de Ton agrément contre Ton courroux, de Ton pardon contre Ton châtiment et je me réfugie auprès de Toi contre Toi. Je ne pourrais T'adresser tous les éloges qui te reviennent. Tu es à l'image de l'éloge que Tu T'es Toi-même adressé.", cat:"Prière"},
+  {id:91, text:"⬜ En se levant de l'inclinaison — Notre Seigneur ! Que Tu sois Loué, d'une louange abondante, bonne et bénie.", cat:"Prière"},
+  {id:92, text:"⬜ Invocation entre le tachahhud final et le salut — Ô Allâh, pardonne-moi mes péchés passés et à venir, ceux commis en secret ou en public, mes abus ainsi que ce dont Tu es plus Connaisseur que moi. Tu es certes Celui qui fait avancer et Celui qui fait reculer, point de divinité à part toi.", cat:"Prière"},
+  {id:93, text:"⬜ Invocation entre le tachahhud final et le salut — Ô Allâh ! Aide-moi à T'évoquer, à T'être reconnaissant et à parfaire mon adoration.", cat:"Prière"},
+  {id:94, text:"⬜ Invocation entre le tachahhud final et le salut — Ô Allâh ! Je Te demande le Paradis et je me réfugie auprès de Toi contre l'Enfer.", cat:"Prière"},
+  {id:95, text:"⬜ Glorification après la prière — Gloire à Allâh (33 fois), Louange à Allâh (33 fois), Allâhu Akbar (33 fois). Point de divinité si ce n'est Allâh Seul et sans associé. À Lui appartiennent la Royauté et la louange et Il est capable de toute chose.", cat:"Après la prière"},
+  {id:96, text:"⬜ Glorification après la prière — Gloire à Allâh (25 fois), Louange à Allâh (25 fois), Allâhu Akbar (25 fois), puis : Point de divinité si ce n'est Allâh.", cat:"Après la prière"},
+  {id:97, text:"⬜ Glorification après la prière — Gloire à Allâh (10 fois), Louange à Allâh (10 fois), Allâhu Akbar (10 fois).", cat:"Après la prière"},
 ];
 
 let invocations = JSON.parse(localStorage.getItem('citadelle_inv')||'null');
