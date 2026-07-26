@@ -116,7 +116,7 @@
           <option>Après la prière</option><option>Au réveil & coucher</option>
           <option>Repas & boisson</option><option>Entrée & sortie</option>
           <option>Protection & Refuge</option><option>Voyages & déplacements</option>
-          <option>Famille & quotidien</option><option>Ablutions</option>
+          <option>Famille & quotidien</option><option>Ablutions</option><option>Temps</option>
           <option>Prière</option><option>Autre</option>
         </select>
       </div>
@@ -142,7 +142,7 @@
 </main>
 
 <script>
-const CATS=['Mosquée','Adhkars du Matin','Adhkars du Soir','Après la prière','Au réveil & coucher','Repas & boisson','Entrée & sortie','Protection & Refuge','Voyages & déplacements','Famille & quotidien','Ablutions','Prière','Autre'];
+const CATS=['Mosquée','Adhkars du Matin','Adhkars du Soir','Après la prière','Au réveil & coucher','Repas & boisson','Entrée & sortie','Protection & Refuge','Voyages & déplacements','Famille & quotidien','Ablutions','Prière','Temps','Autre'];
 
 const DEFAULTS = [
   // MOSQUÉE (7)
@@ -258,6 +258,13 @@ const DEFAULTS = [
   {id:102, text:"⬜ Invocation contre les soucis et la tristesse — Ô le Vivant qui ne meurt jamais, Ô Celui qui subsiste par lui-même et par qui tout subsiste, je cherche secours auprès de Ta miséricorde.", cat:"Protection & Refuge"},
   {id:103, text:"⬜ Invocation contre les soucis et la tristesse — Nul ne mérite d'être adoré excepté Allah, l'Incommensurable, l'Indulgent. Nul ne mérite d'être adoré excepté Allah, le Maître du Trône sublime. Nul ne mérite d'être adoré excepté Allah, le Seigneur des cieux, de la terre et du noble Trône.", cat:"Protection & Refuge"},
   {id:104, text:"⬜ Invocation contre les soucis et la tristesse — Il n'y a de Dieu que Toi, gloire et pureté à Toi, j'étais vraiment du nombre des injustes.", cat:"Protection & Refuge"},
+  // INVOCATIONS LIÉES AU TEMPS (6)
+  {id:105, text:"⬜ À la tombée de la pluie ☔️ — Ô Allâh, fais que cette pluie soit à la fois abondante et bénéfique.", cat:"Temps"},
+  {id:106, text:"⬜ Recommandation : Laisser volontairement la pluie mouiller une partie de son corps 🌧", cat:"Temps"},
+  {id:107, text:"⬜ Après la tombée de la pluie ☔️ — C'est par la grâce et la miséricorde d'Allâh que nous avons reçu cette pluie.", cat:"Temps"},
+  {id:108, text:"⬜ Invocation lors du tonnerre ⛈ — Gloire à celui dont la Louange est chantée par le tonnerre ainsi que par les Anges du fait de la crainte qu'ils ont de Lui.", cat:"Temps"},
+  {id:109, text:"⬜ Invocation lors du vent 💨 — Ô Allâh, je T'implore de m'accorder son bien et je me réfugie auprès de Toi contre son mal.", cat:"Temps"},
+  {id:110, text:"⬜ Invocation lors du vent 💨 — Ô Allâh, je T'implore de m'accorder son bien, le bien qu'il contient et le bien de ce avec quoi il a été envoyé. Et je me réfugie auprès de Toi contre son mal, le mal qu'il contient et le mal de ce avec quoi il a été envoyé.", cat:"Temps"},
 ];
 
 let invocations = JSON.parse(localStorage.getItem('citadelle_inv')||'null');
